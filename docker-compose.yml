@@ -1,19 +1,40 @@
 services:
   px4:
-    image: px4io/px4-dev-simulation:latest
+    # Apple Silicon note: PX4/Gazebo tooling is most reliable on linux/amd64 today.
+    # Docker Desktop will emulate on M1/M2/M3.
+    platform: linux/amd64
+    image: ubuntu:22.04
     container_name: ai-drone-px4
+    working_dir: /workspace
     environment:
-      # Headless by default (macOS friendly)
-      - PX4_SIM_MODEL=gz_x500
+      - DEBIAN_FRONTEND=noninteractive
       - GZ_HEADLESS_RENDERING=1
       - QT_QPA_PLATFORM=offscreen
     volumes:
-      - ./worlds:/workspace/worlds:rw
-    working_dir: /workspace/PX4-Autopilot
-    command: bash -lc "make px4_sitl gz_x500"
+      - px4_build_cache:/root/.cache:rw
     network_mode: host
+    command: >
+      bash -lc "
+      apt-get update &&
+      apt-get install -y --no-install-recommends \
+        ca-certificates git wget \
+        python3 python3-pip \
+        build-essential cmake ninja-build \
+        pkg-config \
+        &&
+      rm -rf /var/lib/apt/lists/* &&
+      if [ ! -d PX4-Autopilot ]; then
+        git clone --depth 1 --recursive https://github.com/PX4/PX4-Autopilot.git;
+      fi &&
+      cd PX4-Autopilot &&
+      ./Tools/setup/ubuntu.sh --no-nuttx --no-sim-tools || true &&
+      make px4_sitl_default &&
+      echo 'PX4 SITL built. (Gazebo integration may require additional packages depending on host/ignition/gz version.)' &&
+      tail -f /dev/null
+      "
 
   ros:
+    platform: linux/amd64
     image: ros:humble
     container_name: ai-drone-ros
     depends_on:
@@ -23,4 +44,19 @@ services:
     volumes:
       - ./ros2_ws:/ros2_ws:rw
     network_mode: host
-    command: bash -lc "apt-get update && apt-get install -y python3-pip python3-opencv ros-humble-cv-bridge && pip3 install pymavlink numpy && cd /ros2_ws && . /opt/ros/humble/setup.sh && colcon build && . install/setup.sh && ros2 launch ai_follower sim_follow.launch.py"
+    command: >
+      bash -lc "
+      apt-get update &&
+      apt-get install -y --no-install-recommends \
+        python3-pip python3-opencv ros-humble-cv-bridge \
+        &&
+      pip3 install --no-cache-dir pymavlink numpy &&
+      cd /ros2_ws &&
+      . /opt/ros/humble/setup.sh &&
+      colcon build &&
+      . install/setup.sh &&
+      ros2 launch ai_follower sim_follow.launch.py
+      "
+
+volumes:
+  px4_build_cache:

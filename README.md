@@ -1,34 +1,28 @@
 # ai-drone-sim-px4-gz
 
-Dockerized **PX4 SITL + Gazebo** simulation with a minimal **ROS 2** follower stack.
+Dockerized **PX4 SITL + Gazebo** simulation starter with a minimal **ROS 2** follower stack.
 
-This project runs:
-- PX4 SITL multicopter
-- Gazebo (gz-sim) world with a simple moving target model
-- ROS 2 nodes:
-  - `vision_node`: detects a colored target in the camera stream (HSV threshold)
-  - `follow_node`: sends MAVLink velocity setpoints to follow the target
+## Status (important)
+This repository is a **starter scaffold**. On **macOS (especially Apple Silicon M1/M2/M3)**, Gazebo GUI/rendering and PX4 sim toolchains inside Docker are frequently problematic.
+
+This repo is updated to:
+- run **headless by default**
+- force **linux/amd64** containers on Apple Silicon (Docker Desktop emulation)
+- build PX4 SITL inside the container (avoids missing/private images)
 
 ## Requirements
-- Docker + Docker Compose v2
-- (Recommended) Linux host. On Windows/macOS you may need additional X/GUI setup.
+- Docker Desktop for Mac
 
-## Quick start
+## Quick start (macOS M1/M2/M3)
 
-### 1) Start simulation
+1) Open Docker Desktop
+
+2) In the project folder, run:
+
 ```
 docker compose up --build
 ```
 
-### 2) (Optional) Open a shell in the ROS container
-```
-docker exec -it ai-drone-ros bash
-```
-
-## Notes / Troubleshooting
-- This is a **starter sim** aimed at running end-to-end quickly.
-- Offboard control in PX4 requires setpoints streaming; the follower sends setpoints continuously.
-- If you don’t see images, check the camera topic and the bridge settings.
-
-## Safety
-Use simulation first. Do **not** fly real hardware with this code without adding proper failsafes.
+## Notes
+- If you downloaded an older ZIP, it may still reference a missing image. Prefer cloning or re-downloading from the repo `main` branch.
+- If you want a fully working Gazebo world + camera pipeline on macOS, the most reliable approach is to run Gazebo/PX4 natively on Ubuntu (or in a Linux VM). This repo can be adapted for that once we confirm your target.
