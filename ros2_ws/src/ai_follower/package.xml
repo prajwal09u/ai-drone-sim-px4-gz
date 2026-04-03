@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>ai_follower</name>
+  <version>0.0.1</version>
+  <description>ROS 2 follower demo for PX4 SITL using MAVLink + OpenCV</description>
+  <maintainer email="you@example.com">you</maintainer>
+  <license>MIT</license>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+</package>

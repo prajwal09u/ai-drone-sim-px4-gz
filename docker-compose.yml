@@ -1,0 +1,28 @@
+services:
+  px4:
+    image: px4io/px4-dev-simulation:latest
+    container_name: ai-drone-px4
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./worlds:/workspace/worlds:rw
+    working_dir: /workspace/PX4-Autopilot
+    command: bash -lc "make px4_sitl gz_x500"
+    network_mode: host
+
+  ros:
+    image: ros:humble
+    container_name: ai-drone-ros
+    depends_on:
+      - px4
+    environment:
+      - ROS_DOMAIN_ID=0
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./ros2_ws:/ros2_ws:rw
+    network_mode: host
+    command: bash -lc "apt-get update && apt-get install -y python3-pip python3-opencv ros-humble-cv-bridge && pip3 install pymavlink numpy && cd /ros2_ws && . /opt/ros/humble/setup.sh && colcon build && . install/setup.sh && ros2 launch ai_follower sim_follow.launch.py"
